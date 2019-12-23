@@ -1,4 +1,6 @@
-# Logistic Regression
+# Grid Search(improving model performance by changing values of hyperparameters)
+# kernel svm 
+# for data that is not linearly seprable.
 
 # Importing the libraries
 import numpy as np
@@ -16,21 +18,42 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, rand
 
 # Feature Scaling
 from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
+sc_X = StandardScaler()
+X_train = sc_X.fit_transform(X_train)
+X_test = sc_X.transform(X_test)
 
-# Fitting Logistic Regression to the Training set
-from sklearn.linear_model import LogisticRegression
-classifier = LogisticRegression(random_state = 0)
+# fitting classifier to the training set
+from sklearn.svm import SVC
+classifier = SVC(kernel = 'rbf', random_state = 0 )
 classifier.fit(X_train, y_train)
 
-# Predicting the Test set results
+# predict the test set results
 y_pred = classifier.predict(X_test)
 
-# Making the Confusion Matrix
+# making the confusion matrix(contains correct and incorrect predictions made by our model)
 from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred)   #will be a vector of size 100.
+
+# Applying K fold cross validation
+from sklearn.model_selection import cross_val_score
+accuracies = cross_val_score(estimator = classifier, X = X_train, y = y_train, cv = 10) # 10 fold cross validation.
+accuracies.mean()
+accuracies.std()
+
+# Applying grid search to find best model and best parameters
+from sklearn.model_selection import GridSearchCV
+parameters = [{'C' : [1, 10, 100, 1000], 'kernel' : ['linear']},
+              {'C' : [1, 10, 100, 1000], 'kernel' : ['rbf'], 'gamma' : [0.5, 0.1, 0.01, 0.001, 0.0001]}]
+grid_search = GridSearchCV(estimator = classifier,
+                           param_grid = parameters,
+                           scoring = 'accuracy',
+                           cv = 10,
+                           n_jobs = -1)
+# n_jobs used when youre working with a very large dataset and enables parallel processing
+grid_search = grid_search.fit(X_train, y_train)
+best_accuracy = grid_search.best_score_
+best_parameters = grid_search.best_params_
+
 
 # Visualising the Training set results
 from matplotlib.colors import ListedColormap
@@ -44,7 +67,7 @@ plt.ylim(X2.min(), X2.max())
 for i, j in enumerate(np.unique(y_set)):
     plt.scatter(X_set[y_set == j, 0], X_set[y_set == j, 1],
                 c = ListedColormap(('red', 'green'))(i), label = j)
-plt.title('Logistic Regression (Training set)')
+plt.title('Kernel SVM (Training set)')
 plt.xlabel('Age')
 plt.ylabel('Estimated Salary')
 plt.legend()
@@ -62,8 +85,10 @@ plt.ylim(X2.min(), X2.max())
 for i, j in enumerate(np.unique(y_set)):
     plt.scatter(X_set[y_set == j, 0], X_set[y_set == j, 1],
                 c = ListedColormap(('red', 'green'))(i), label = j)
-plt.title('Logistic Regression (Test set)')
+plt.title('Kernel SVM (Test set)')
 plt.xlabel('Age')
 plt.ylabel('Estimated Salary')
 plt.legend()
 plt.show()
+
+
